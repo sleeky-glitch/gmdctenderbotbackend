@@ -9,52 +9,51 @@ from .services import TenderGenerator
 from .config import settings
 
 app = FastAPI(
-title="Tender Generator API",
-description="API for generating tender documents using AI",
-version="1.0.0"
+    title="Tender Generator API",
+    description="API for generating tender documents using AI",
+    version="1.0.0"
 )
 
 app.add_middleware(
-CORSMiddleware,
-allow_origins=[""],
-allow_credentials=True,
-allow_methods=[""],
-allow_headers=["*"],
+    CORSMiddleware,
+    allow_origins=["*"],  # Updated to allow all origins, modify as needed
+    allow_credentials=True,
+    allow_methods=["*"],  # Updated to allow all methods
+    allow_headers=["*"],
 )
-
 
 try:
-openai_client = OpenAI(
-api_key=settings.OPENAI_API_KEY,
-http_client=httpx.Client(
-timeout=60.0,
-follow_redirects=True
-)
-)
+    openai_client = OpenAI(
+        api_key=settings.OPENAI_API_KEY,
+        http_client=httpx.Client(
+            timeout=60.0,
+            follow_redirects=True
+        )
+    )
 
-pc = pinecone.Pinecone(
-    api_key=settings.PINECONE_API_KEY
-)
-pinecone_index = pc.Index(settings.PINECONE_INDEX_NAME)
+    pc = pinecone.Pinecone(
+        api_key=settings.PINECONE_API_KEY
+    )
+    pinecone_index = pc.Index(settings.PINECONE_INDEX_NAME)
 
-tender_generator = TenderGenerator(openai_client, pinecone_index)
+    tender_generator = TenderGenerator(openai_client, pinecone_index)
 except Exception as e:
-raise Exception(f"Failed to initialize services: {str(e)}")
+    raise Exception(f"Failed to initialize services: {str(e)}")
 
 @app.get("/")
 async def root():
-return {"message": "Welcome to the Tender Generator API"}
+    return {"message": "Welcome to the Tender Generator API"}
 
 @app.post("/generate-tender", response_model=TenderResponse)
 async def generate_tender(project_details: ProjectDetails):
-try:
-tender_sections = tender_generator.generate_complete_tender(
-project_details.model_dump()
-)
-return TenderResponse(sections=tender_sections)
-except Exception as e:
-raise HTTPException(status_code=500, detail=str(e))
+    try:
+        tender_sections = tender_generator.generate_complete_tender(
+            project_details.model_dump()
+        )
+        return TenderResponse(sections=tender_sections)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
-return {"status": "healthy"}
+    return {"status": "healthy"}
