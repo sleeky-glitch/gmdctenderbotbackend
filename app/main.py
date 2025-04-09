@@ -16,9 +16,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Updated to allow all origins, modify as needed
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Updated to allow all methods
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -31,10 +31,14 @@ try:
         )
     )
 
-    pc = pinecone.Pinecone(
-        api_key=settings.PINECONE_API_KEY
+    # Initialize Pinecone
+    pinecone.init(
+        api_key=settings.PINECONE_API_KEY,
+        environment="gcp-starter"  # replace with your environment
     )
-    pinecone_index = pc.Index(settings.PINECONE_INDEX_NAME)
+
+    # Get the index
+    pinecone_index = pinecone.Index(settings.PINECONE_INDEX_NAME)
 
     tender_generator = TenderGenerator(openai_client, pinecone_index)
 except Exception as e:
